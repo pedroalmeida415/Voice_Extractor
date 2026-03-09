@@ -186,6 +186,9 @@ def main(args):
     
     # --- STAGE 0: Initialize Models ---
     log.info("[bold magenta]== STAGE 0: Initializing Models ==[/]")
+    
+    huggingface_auth_token = args.token if args.token else get_huggingface_token()
+
     bandit_separator_model = None
     if not args.skip_bandit:
         if not args.bandit_model_path:
@@ -205,7 +208,7 @@ def main(args):
         if not HAVE_SPEECHBRAIN:
             log.warning("SpeechBrain not disabled, but library not available. ECAPA-TDNN verification will be skipped.")
         else:
-            speechbrain_model = init_speechbrain_speaker_recognition_model()
+            speechbrain_model = init_speechbrain_speaker_recognition_model(huggingface_token=huggingface_auth_token)
             if speechbrain_model is None:
                 log.warning("Failed to initialize SpeechBrain model. ECAPA-TDNN verification will be skipped.")
     else:
@@ -252,7 +255,6 @@ def main(args):
         try: diar_model_config["diar_hyperparams"] = json.loads(args.diar_hyperparams)
         except json.JSONDecodeError: log.error(f"Invalid JSON for diarization hyperparameters: {args.diar_hyperparams}. Using defaults.")
     
-    huggingface_auth_token = args.token if args.token else get_huggingface_token()
     diarization_annotation = diarize_audio(source_for_diarization_osd, run_tmp_dir, huggingface_auth_token, diar_model_config, args.dry_run)
     if not diarization_annotation or not diarization_annotation.labels():
         log.error("[bold red]Diarization failed or produced no speaker labels. Cannot proceed. Exiting.[/]")

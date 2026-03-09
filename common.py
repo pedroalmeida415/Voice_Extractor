@@ -58,6 +58,30 @@ REQ = [
     "omegaconf>=2.3.0"
 ]
 
+# --- Monkeypatch for huggingface_hub 1.x compatibility ---
+try:
+    import huggingface_hub
+    import huggingface_hub.utils
+
+    # Some libraries still pass use_auth_token which is removed/renamed in 1.x
+    if hasattr(huggingface_hub, 'hf_hub_download'):
+        _original_hf_hub_download = huggingface_hub.hf_hub_download
+        def _patched_hf_hub_download(*args, **kwargs):
+            if 'use_auth_token' in kwargs:
+                kwargs['token'] = kwargs.pop('use_auth_token')
+            return _original_hf_hub_download(*args, **kwargs)
+        huggingface_hub.hf_hub_download = _patched_hf_hub_download
+
+    if hasattr(huggingface_hub, 'snapshot_download'):
+        _original_snapshot_download = huggingface_hub.snapshot_download
+        def _patched_snapshot_download(*args, **kwargs):
+            if 'use_auth_token' in kwargs:
+                kwargs['token'] = kwargs.pop('use_auth_token')
+            return _original_snapshot_download(*args, **kwargs)
+        huggingface_hub.snapshot_download = _patched_snapshot_download
+except ImportError:
+    pass
+
 # Model configurations - will be conditionally downloaded
 MODEL_CONFIGS = {
     'bandit_checkpoint_eng': {

@@ -166,7 +166,7 @@ def init_wespeaker_models(rvector_id_or_path: str, gemini_id_or_path: str) -> di
         return None
     
 
-def init_speechbrain_speaker_recognition_model(model_source: str = "speechbrain/spkrec-ecapa-voxceleb") -> 'SpeechBrainSpeakerRecognition' | None:
+def init_speechbrain_speaker_recognition_model(model_source: str = "speechbrain/spkrec-ecapa-voxceleb", huggingface_token: str = None) -> 'SpeechBrainSpeakerRecognition' | None:
     """Initializes the SpeechBrain SpeakerRecognition model (ECAPA-TDNN)."""
     if not HAVE_SPEECHBRAIN:
         log.warning("SpeechBrain library not found or import failed. SpeechBrain ECAPA-TDNN verification will be skipped.")
@@ -184,10 +184,12 @@ def init_speechbrain_speaker_recognition_model(model_source: str = "speechbrain/
         savedir = user_cache_dir / "voice_extractor_speechbrain_cache" / savedir_name
         ensure_dir_exists(savedir)
         
+        # In newer huggingface_hub, the argument is 'token'
         model = SpeechBrainSpeakerRecognition.from_hparams(
             source=model_source, 
             savedir=str(savedir), 
-            run_opts={"device": DEVICE.type}
+            run_opts={"device": DEVICE.type},
+            use_auth_token=huggingface_token
         )
         model.eval() # Set to evaluation mode
         log.info(f"[green]✓ SpeechBrain model '{model_source}' loaded to {DEVICE.type.upper()}.[/]")
